@@ -73,6 +73,23 @@ config.keys = {
 		mods = 'CMD',
 		action = wezterm.action.PasteFrom('Clipboard'),
 	},
+	-- CMD+[ / CMD+]: switch focus between panes
+	{
+		key = '[',
+		mods = 'CMD',
+		action = wezterm.action.ActivatePaneDirection('Prev'),
+	},
+	{
+		key = ']',
+		mods = 'CMD',
+		action = wezterm.action.ActivatePaneDirection('Next'),
+	},
+	-- Shift+Enter: send CSI u sequence so Claude Code recognizes it as newline
+	{
+		key = 'Enter',
+		mods = 'SHIFT',
+		action = wezterm.action { SendString = '\x1b[13;2u' },
+	},
 }
 
 config.mouse_bindings = {
