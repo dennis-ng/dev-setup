@@ -12,6 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 for f in "$SCRIPT_DIR"/.devtoolsrc "$SCRIPT_DIR"/.wezterm.lua; do
     cp -Rvn "$f" ~
 done
+cp -Rvn "$SCRIPT_DIR/.config/" ~/.config/
 
 # Append devtoolsrc sourcing to ~/.zshrc if not already present
 ZSHRC_SNIPPET='if [ -f ~/.devtoolsrc ]; then
