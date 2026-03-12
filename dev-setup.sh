@@ -13,6 +13,8 @@ for f in "$SCRIPT_DIR"/.devtoolsrc "$SCRIPT_DIR"/.wezterm.lua; do
     cp -Rvn "$f" ~
 done
 cp -Rvn "$SCRIPT_DIR/.config/" ~/.config/
+# Always update lazy.lua to pick up config changes
+cp -v "$SCRIPT_DIR/.config/nvim/lua/config/lazy.lua" ~/.config/nvim/lua/config/lazy.lua
 
 # Append devtoolsrc sourcing to ~/.zshrc if not already present
 ZSHRC_SNIPPET='if [ -f ~/.devtoolsrc ]; then
