@@ -9,7 +9,7 @@ fi
 
 # Copy dotfiles to home (exclude .git, ., ..)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-for f in "$SCRIPT_DIR"/.devtoolsrc "$SCRIPT_DIR"/.wezterm.lua; do
+for f in "$SCRIPT_DIR"/.devtoolsrc "$SCRIPT_DIR"/.wezterm.lua "$SCRIPT_DIR"/.tmux.conf; do
     cp -Rvn "$f" ~
 done
 mkdir -p ~/.config
