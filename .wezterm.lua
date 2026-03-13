@@ -10,7 +10,7 @@ config.font_size=13
 config.window_decorations = "RESIZE"
 
 -- Theme
-config.color_scheme = 'Catppuccin Mocha'
+config.color_scheme = 'Kanagawa (Gogh)'
 -- config.color_scheme = 'OneHalfDark'
 -- Key bindings
 config.keys = {
@@ -89,6 +89,15 @@ config.keys = {
 		key = 'Enter',
 		mods = 'SHIFT',
 		action = wezterm.action { SendString = '\x1b[13;2u' },
+	},
+}
+
+-- SSM multiplexed SSH domain
+config.ssh_domains = {
+	{
+		name = 'sec-dev-dennis',
+		remote_address = 'i-07edbacc97803026e',
+		username = 'ec2-user',
 	},
 }
 

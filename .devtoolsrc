@@ -63,3 +63,9 @@ alias ls="eza --icons=always"
 
 export EDITOR="nvim"
 
+# ---- p10k overrides -----
+# Dark text on blue directory segment for readability
+typeset -g POWERLEVEL9K_DIR_FOREGROUND='#000000'
+typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND='#000000'
+typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND='#000000'
+
