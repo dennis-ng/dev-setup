@@ -1,5 +1,5 @@
 # install apps:
-# brew install wezterm neovim lazygit fzf fd bat delta eza tlrc
+# brew install wezterm neovim lazygit fzf fd bat delta eza tlrc zoxide
 
 # Clone fzf-git.sh if not already present
 if [ ! -d ~/fzf-git.sh ]; then

@@ -55,12 +55,20 @@ _fzf_comprun() {
 
 # ----- Bat (better cat) -----
 
-export BAT_THEME=tokyonight_night
+if command -v git &> /dev/null; then
+  git config --global core.pager delta
+  git config --global interactive.diffFilter 'delta --color-only'
+  git config --global delta.navigate true
+  git config --global delta.side-by-side true
+  git config --global delta.line-numbers true
+  git config --global merge.conflictstyle diff3
+  git config --global diff.colorMoved default
+fi
 
 # ---- Eza (better ls) -----
 
 alias ls="eza --icons=always"
-
+alias vim=nvim
 export EDITOR="nvim"
 
 # ---- p10k overrides -----
@@ -69,3 +77,6 @@ typeset -g POWERLEVEL9K_DIR_FOREGROUND='#000000'
 typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND='#000000'
 typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND='#000000'
 
+# zoxide
+eval "$(zoxide init zsh)"
+alias cd="z"
