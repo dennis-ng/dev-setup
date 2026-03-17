@@ -90,6 +90,66 @@ config.keys = {
 		mods = 'SHIFT',
 		action = wezterm.action { SendString = '\x1b[13;2u' },
 	},
+	-- Move tab left/right
+	{
+		key = 'LeftArrow',
+		mods = 'CMD | SHIFT',
+		action = wezterm.action_callback(function(window, pane)
+			local tab = window:active_tab()
+			local idx = tab:tab_id()
+			-- Find current tab index
+			local tabs = window:mux_window():tabs_with_info()
+			for _, t in ipairs(tabs) do
+				if t.tab:tab_id() == tab:tab_id() then
+					if t.index > 0 then
+						window:perform_action(wezterm.action.MoveTab(t.index - 1), pane)
+					end
+					break
+				end
+			end
+		end),
+	},
+	{
+		key = 'RightArrow',
+		mods = 'CMD | SHIFT',
+		action = wezterm.action_callback(function(window, pane)
+			local tab = window:active_tab()
+			local tabs = window:mux_window():tabs_with_info()
+			for _, t in ipairs(tabs) do
+				if t.tab:tab_id() == tab:tab_id() then
+					if t.index < #tabs - 1 then
+						window:perform_action(wezterm.action.MoveTab(t.index + 1), pane)
+					end
+					break
+				end
+			end
+		end),
+	},
+	-- Fix CMD+9: go to tab 9 instead of last tab (default browser-like behavior)
+	{
+		key = '9',
+		mods = 'CMD',
+		action = wezterm.action.ActivateTab(8),
+	},
+	-- CMD+0: go to last tab
+	{
+		key = '0',
+		mods = 'CMD',
+		action = wezterm.action.ActivateTab(-1),
+	},
+	-- Rename current tab
+	{
+		key = 'r',
+		mods = 'CMD | SHIFT',
+		action = wezterm.action.PromptInputLine {
+			description = 'Enter new name for tab',
+			action = wezterm.action_callback(function(window, pane, line)
+				if line then
+					window:active_tab():set_title(line)
+				end
+			end),
+		},
+	},
 }
 
 -- SSM multiplexed SSH domain
