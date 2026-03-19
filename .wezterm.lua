@@ -8,9 +8,22 @@ config.font_size=13
 
 -- Window
 config.window_decorations = "RESIZE"
+config.tab_bar_at_bottom = true
 
 -- Theme
 config.color_scheme = 'Kanagawa (Gogh)'
+config.colors = {
+	tab_bar = {
+		inactive_tab = {
+			bg_color = '#2A2A37',
+			fg_color = '#C8C093',
+		},
+		active_tab = {
+			bg_color = '#DCD7BA',
+			fg_color = '#1F1F28',
+		},
+	},
+}
 -- config.color_scheme = 'OneHalfDark'
 -- Key bindings
 config.keys = {
@@ -175,5 +188,29 @@ config.mouse_bindings = {
 		action = wezterm.action.OpenLinkAtMouseCursor,
 	},
 }
+
+-- Dynamic tab scaling based on window size
+wezterm.on('window-resized', function(window, pane)
+	local dims = window:get_dimensions()
+	local overrides = window:get_config_overrides() or {}
+	local width = dims.pixel_width
+	if width >= 3440 then
+		-- Ultrawide 3440x1440
+		overrides.tab_max_width = 48
+		overrides.window_frame = { font_size = 16 }
+	elseif width >= 3024 then
+		-- MacBook Retina 3024x1964
+		overrides.tab_max_width = 64
+		overrides.window_frame = { font_size = 9 }
+	elseif width >= 1600 then
+		-- FlipGo-A 1600x2000 (portrait)
+		overrides.tab_max_width = 36
+		overrides.window_frame = { font_size = 11 }
+	else
+		overrides.tab_max_width = 28
+		overrides.window_frame = { font_size = 10 }
+	end
+	window:set_config_overrides(overrides)
+end)
 
 return config
