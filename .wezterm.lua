@@ -179,7 +179,7 @@ config.mouse_bindings = {
 	{
 		event = { Up = { streak = 1, button = 'Left' } },
 		mods = 'NONE',
-		action = wezterm.action.CompleteSelection('ClipboardAndPrimarySelection'),
+		action = wezterm.action.DisableDefaultAssignment,
 	},
 	-- Open link only on CMD+left click
 	{
