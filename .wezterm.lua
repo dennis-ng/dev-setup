@@ -7,8 +7,9 @@ config.font = wezterm.font("MesloLGS Nerd Font Mono")
 config.font_size=13
 
 -- Window
-config.window_decorations = "RESIZE"
+-- config.window_decorations = "RESIZE"
 config.tab_bar_at_bottom = true
+config.bypass_mouse_reporting_modifiers = 'CMD'
 
 -- Theme
 config.color_scheme = 'Kanagawa (Gogh)'
@@ -97,6 +98,28 @@ config.keys = {
 		mods = 'CMD',
 		action = wezterm.action.ActivatePaneDirection('Next'),
 	},
+	-- CMD+Shift+[ / CMD+Shift+]: rotate panes
+	{
+		key = '[',
+		mods = 'CMD | SHIFT',
+		action = wezterm.action.RotatePanes('CounterClockwise'),
+	},
+	{
+		key = ']',
+		mods = 'CMD | SHIFT',
+		action = wezterm.action.RotatePanes('Clockwise'),
+	},
+	-- Ctrl+CMD+[ / Ctrl+CMD+]: switch tabs
+	{
+		key = '[',
+		mods = 'CTRL | CMD',
+		action = wezterm.action.ActivateTabRelative(-1),
+	},
+	{
+		key = ']',
+		mods = 'CTRL | CMD',
+		action = wezterm.action.ActivateTabRelative(1),
+	},
 	-- Shift+Enter: send CSI u sequence so Claude Code recognizes it as newline
 	{
 		key = 'Enter',
@@ -179,7 +202,7 @@ config.mouse_bindings = {
 	{
 		event = { Up = { streak = 1, button = 'Left' } },
 		mods = 'NONE',
-		action = wezterm.action.DisableDefaultAssignment,
+		action = wezterm.action.Multiple {},
 	},
 	-- Open link only on CMD+left click
 	{
