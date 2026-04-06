@@ -10,6 +10,38 @@ config.font_size=13
 -- config.window_decorations = "RESIZE"
 config.tab_bar_at_bottom = true
 config.bypass_mouse_reporting_modifiers = 'CMD'
+config.audible_bell = 'Disabled'
+
+-- Helper: detect if pane is running inside tmux (cached per pane for 5s)
+local tmux_cache = {}
+local function is_inside_tmux(pane)
+	local ok, result = pcall(function()
+		local pane_id = pane:pane_id()
+		local now = os.time()
+		local cached = tmux_cache[pane_id]
+		if cached and (now - cached.time) < 5 then
+			return cached.result
+		end
+		-- Use pane's child PID to walk process tree looking for tmux
+		local pid = pane:get_child_pid()
+		if not pid then
+			tmux_cache[pane_id] = { result = false, time = now }
+			return false
+		end
+		local success, output = wezterm.run_child_process({
+			"bash", "-c",
+			string.format(
+				"pid=%d; while [ \"$pid\" -gt 1 ] 2>/dev/null; do c=$(ps -o comm= -p \"$pid\" 2>/dev/null); case \"$c\" in *tmux*) echo y; exit;; esac; pid=$(ps -o ppid= -p \"$pid\" 2>/dev/null | tr -d ' '); done; echo n",
+				pid
+			),
+		})
+		local detected = success and output:match("y") ~= nil
+		tmux_cache[pane_id] = { result = detected, time = now }
+		return detected
+	end)
+	if not ok then return false end
+	return result
+end
 
 -- Theme
 config.color_scheme = 'Kanagawa (Gogh)'
@@ -31,17 +63,37 @@ config.keys = {
 	{
 		key = 'w',
 		mods = 'CMD',
-		action = wezterm.action.CloseCurrentPane { confirm = false },
+		action = wezterm.action_callback(function(window, pane)
+			if is_inside_tmux(pane) then
+				window:perform_action(wezterm.action.SendString('\x02:kill-pane\r'), pane)
+			else
+				window:perform_action(wezterm.action.CloseCurrentPane { confirm = false }, pane)
+			end
+		end),
 	},
 	{
 		key = 'd',
 		mods = 'CMD',
-		action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' },
+		action = wezterm.action_callback(function(window, pane)
+			if is_inside_tmux(pane) then
+				-- tmux prefix + % = vertical split (left/right)
+				window:perform_action(wezterm.action.SendString('\x02%'), pane)
+			else
+				window:perform_action(wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' }, pane)
+			end
+		end),
 	},
 	{
 		key = 'd',
 		mods = 'CMD | SHIFT',
-		action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' },
+		action = wezterm.action_callback(function(window, pane)
+			if is_inside_tmux(pane) then
+				-- tmux prefix + " = horizontal split (top/bottom)
+				window:perform_action(wezterm.action.SendString('\x02"'), pane)
+			else
+				window:perform_action(wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' }, pane)
+			end
+		end),
 	},
 	-- Rebind CMD-Backspace and Opt-Backspace
 	{
@@ -91,23 +143,49 @@ config.keys = {
 	{
 		key = '[',
 		mods = 'CMD',
-		action = wezterm.action.ActivatePaneDirection('Prev'),
+		action = wezterm.action_callback(function(window, pane)
+			if is_inside_tmux(pane) then
+				-- tmux prefix + o = cycle panes (prev not available, use select-pane -t :.-1)
+				window:perform_action(wezterm.action.SendString('\x02;'), pane)
+			else
+				window:perform_action(wezterm.action.ActivatePaneDirection('Prev'), pane)
+			end
+		end),
 	},
 	{
 		key = ']',
 		mods = 'CMD',
-		action = wezterm.action.ActivatePaneDirection('Next'),
+		action = wezterm.action_callback(function(window, pane)
+			if is_inside_tmux(pane) then
+				-- tmux prefix + o = next pane
+				window:perform_action(wezterm.action.SendString('\x02o'), pane)
+			else
+				window:perform_action(wezterm.action.ActivatePaneDirection('Next'), pane)
+			end
+		end),
 	},
 	-- CMD+Shift+[ / CMD+Shift+]: rotate panes
 	{
 		key = '[',
 		mods = 'CMD | SHIFT',
-		action = wezterm.action.RotatePanes('CounterClockwise'),
+		action = wezterm.action_callback(function(window, pane)
+			if is_inside_tmux(pane) then
+				window:perform_action(wezterm.action.SendString('\x02{'), pane)
+			else
+				window:perform_action(wezterm.action.RotatePanes('CounterClockwise'), pane)
+			end
+		end),
 	},
 	{
 		key = ']',
 		mods = 'CMD | SHIFT',
-		action = wezterm.action.RotatePanes('Clockwise'),
+		action = wezterm.action_callback(function(window, pane)
+			if is_inside_tmux(pane) then
+				window:perform_action(wezterm.action.SendString('\x02}'), pane)
+			else
+				window:perform_action(wezterm.action.RotatePanes('Clockwise'), pane)
+			end
+		end),
 	},
 	-- Ctrl+CMD+[ / Ctrl+CMD+]: switch tabs
 	{
@@ -173,18 +251,25 @@ config.keys = {
 		mods = 'CMD',
 		action = wezterm.action.ActivateTab(-1),
 	},
-	-- Rename current tab
+	-- Rename current tab/window
 	{
 		key = 'r',
 		mods = 'CMD | SHIFT',
-		action = wezterm.action.PromptInputLine {
-			description = 'Enter new name for tab',
-			action = wezterm.action_callback(function(window, pane, line)
-				if line then
-					window:active_tab():set_title(line)
-				end
-			end),
-		},
+		action = wezterm.action_callback(function(window, pane)
+			if is_inside_tmux(pane) then
+				-- tmux prefix + , = rename window
+				window:perform_action(wezterm.action.SendString('\x02,'), pane)
+			else
+				window:perform_action(wezterm.action.PromptInputLine {
+					description = 'Enter new name for tab',
+					action = wezterm.action_callback(function(inner_window, inner_pane, line)
+						if line then
+							inner_window:active_tab():set_title(line)
+						end
+					end),
+				}, pane)
+			end
+		end),
 	},
 }
 
@@ -211,6 +296,56 @@ config.mouse_bindings = {
 		action = wezterm.action.OpenLinkAtMouseCursor,
 	},
 }
+
+
+-- Bell-based tab highlighting: tabs turn blue when a BEL is received, clear on focus
+local bell_panes = {}
+
+wezterm.on('bell', function(window, pane)
+	bell_panes[pane:pane_id()] = true
+	window:invalidate()
+	-- Play sound only if ~/.claude/bell_enabled contains "1"
+	local f = io.open(os.getenv('HOME') .. '/.claude/bell_enabled', 'r')
+	if f then
+		local val = f:read('*l')
+		f:close()
+		if val and val:match('^1') then
+			wezterm.background_child_process({ 'afplay', '/System/Library/Sounds/Glass.aiff' })
+		end
+	end
+end)
+
+wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_width)
+	local title = tab.tab_title
+	if not title or #title == 0 then
+		title = tab.active_pane.title
+	end
+	title = (tab.tab_index + 1) .. ':' .. title
+	if #title > max_width - 2 then
+		title = wezterm.truncate_right(title, max_width - 2)
+	end
+
+	if tab.is_active then
+		bell_panes[tab.active_pane.pane_id] = nil
+		return {
+			{ Background = { Color = '#DCD7BA' } },
+			{ Foreground = { Color = '#1F1F28' } },
+			{ Text = ' ' .. title .. ' ' },
+		}
+	elseif bell_panes[tab.active_pane.pane_id] then
+		return {
+			{ Background = { Color = '#7E9CD8' } },
+			{ Foreground = { Color = '#1F1F28' } },
+			{ Text = ' ' .. title .. ' ' },
+		}
+	else
+		return {
+			{ Background = { Color = '#2A2A37' } },
+			{ Foreground = { Color = '#C8C093' } },
+			{ Text = ' ' .. title .. ' ' },
+		}
+	end
+end)
 
 -- Dynamic tab scaling based on window size
 wezterm.on('window-resized', function(window, pane)

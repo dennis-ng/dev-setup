@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Everything Claude Code — Explained</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232733;
+    --border: #2e3345;
+    --text: #e2e4ed;
+    --text-dim: #8b8fa3;
+    --accent: #7c6bf0;
+    --accent-glow: rgba(124,107,240,0.15);
+    --green: #4ade80;
+    --amber: #fbbf24;
+    --cyan: #22d3ee;
+    --pink: #f472b6;
+    --radius: 12px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 60px 24px 40px;
+    position: relative;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  header h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  header p { color: var(--text-dim); font-size: 1.1rem; max-width: 520px; margin: 0 auto; }
+
+  /* Analogy section */
+  .analogy {
+    max-width: 720px;
+    margin: 48px auto 0;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .analogy-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .analogy-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--cyan), var(--pink));
+  }
+  .analogy-card h2 { font-size: 1.2rem; margin-bottom: 16px; color: var(--amber); }
+  .analogy-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .analogy-box {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 20px 28px;
+    text-align: center;
+    min-width: 160px;
+  }
+  .analogy-box .icon { font-size: 2rem; margin-bottom: 8px; }
+  .analogy-box .label { font-weight: 600; font-size: 0.95rem; }
+  .analogy-box .sub { color: var(--text-dim); font-size: 0.82rem; margin-top: 4px; }
+  .arrow { font-size: 1.8rem; color: var(--accent); }
+
+  /* Tabs */
+  .tabs-section {
+    max-width: 860px;
+    margin: 56px auto 0;
+    padding: 0 24px;
+  }
+  .tabs-section > h2 {
+    text-align: center;
+    font-size: 1.4rem;
+    margin-bottom: 24px;
+  }
+  .tab-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .tab-btn {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .tab-panel { display: none; animation: fadeIn 0.3s ease; }
+  .tab-panel.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  .panel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .panel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: default;
+  }
+  .panel-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+  .panel-card .card-icon { font-size: 1.6rem; margin-bottom: 8px; }
+  .panel-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 6px; }
+  .panel-card p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
+  .badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  .badge-green { background: rgba(74,222,128,0.15); color: var(--green); }
+  .badge-amber { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .badge-cyan  { background: rgba(34,211,238,0.15); color: var(--cyan); }
+  .badge-pink  { background: rgba(244,114,182,0.15); color: var(--pink); }
+
+  /* Flow diagram */
+  .flow-section {
+    max-width: 860px;
+    margin: 56px auto 0;
+    padding: 0 24px;
+  }
+  .flow-section h2 { text-align: center; font-size: 1.4rem; margin-bottom: 24px; }
+  .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .flow-step {
+    flex: 1;
+    min-width: 150px;
+    max-width: 200px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .flow-step:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .flow-step .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+  }
+  .flow-step h4 { font-size: 0.9rem; margin-bottom: 6px; }
+  .flow-step p { font-size: 0.78rem; color: var(--text-dim); }
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    color: var(--accent);
+    font-size: 1.4rem;
+  }
+  @media (max-width: 680px) {
+    .flow { flex-direction: column; align-items: center; }
+    .flow-arrow { transform: rotate(90deg); padding: 4px 0; }
+  }
+
+  /* Interactive demo */
+  .demo-section {
+    max-width: 640px;
+    margin: 56px auto 0;
+    padding: 0 24px;
+  }
+  .demo-section h2 { text-align: center; font-size: 1.4rem; margin-bottom: 8px; }
+  .demo-section > p { text-align: center; color: var(--text-dim); font-size: 0.9rem; margin-bottom: 20px; }
+  .terminal {
+    background: #0c0e14;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .terminal-bar {
+    background: var(--surface);
+    padding: 10px 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .terminal-dot { width:12px; height:12px; border-radius:50%; }
+  .terminal-dot.r { background:#ff5f57; }
+  .terminal-dot.y { background:#febc2e; }
+  .terminal-dot.g { background:#28c840; }
+  .terminal-bar span { margin-left: 8px; font-size: 0.8rem; color: var(--text-dim); }
+  .terminal-body {
+    padding: 20px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.85rem;
+    min-height: 200px;
+    line-height: 1.7;
+  }
+  .terminal-body .prompt { color: var(--green); }
+  .terminal-body .cmd { color: var(--text); }
+  .terminal-body .output { color: var(--text-dim); }
+  .terminal-body .hl { color: var(--cyan); }
+  .terminal-body .typing-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: var(--accent);
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .cmd-btns {
+    display: flex;
+    gap: 8px;
+    padding: 0 20px 16px;
+    flex-wrap: wrap;
+  }
+  .cmd-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-family: 'SF Mono', monospace;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .cmd-btn:hover { border-color: var(--accent); color: var(--text); }
+  .cmd-btn.active { border-color: var(--accent); color: var(--accent); }
+
+  /* Stats */
+  .stats {
+    max-width: 620px;
+    margin: 56px auto 0;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    text-align: center;
+  }
+  .stat-box h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-box p { font-size: 0.78rem; color: var(--text-dim); margin-top: 4px; }
+  @media (max-width: 520px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 56px 24px 32px;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Everything Claude Code</h1>
+  <p>A power-user toolkit that supercharges AI coding agents with specialized agents, skills, commands, rules, and hooks.</p>
+</header>
+
+<!-- Analogy -->
+<section class="analogy">
+  <div class="analogy-card">
+    <h2>The Core Idea</h2>
+    <div class="analogy-row">
+      <div class="analogy-box">
+        <div class="icon">🤖</div>
+        <div class="label">Claude Code</div>
+        <div class="sub">Base AI agent</div>
+      </div>
+      <div class="arrow">+</div>
+      <div class="analogy-box">
+        <div class="icon">⚡</div>
+        <div class="label">ECC Plugin</div>
+        <div class="sub">Agents, skills, rules&hellip;</div>
+      </div>
+      <div class="arrow">=</div>
+      <div class="analogy-box" style="border:1px solid var(--accent);">
+        <div class="icon">🚀</div>
+        <div class="label">Supercharged Agent</div>
+        <div class="sub">Structured, optimized, persistent</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat-box"><h3>12+</h3><p>Subagents</p></div>
+  <div class="stat-box"><h3>100+</h3><p>Skills</p></div>
+  <div class="stat-box"><h3>57+</h3><p>Commands</p></div>
+  <div class="stat-box"><h3>50K+</h3><p>Stars</p></div>
+</div>
+
+<!-- Component Tabs -->
+<section class="tabs-section">
+  <h2>What's Inside</h2>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="agents">Agents</button>
+    <button class="tab-btn" data-tab="skills">Skills</button>
+    <button class="tab-btn" data-tab="commands">Commands</button>
+    <button class="tab-btn" data-tab="rules">Rules</button>
+    <button class="tab-btn" data-tab="hooks">Hooks</button>
+  </div>
+
+  <div id="tab-agents" class="tab-panel active">
+    <div class="panel-grid">
+      <div class="panel-card"><div class="card-icon">🗺️</div><h3>Planner</h3><p>Breaks complex tasks into structured, ordered steps before implementation begins.</p><span class="badge badge-green">Core</span></div>
+      <div class="panel-card"><div class="card-icon">🏗️</div><h3>Architect</h3><p>Designs system structure, picks patterns, and ensures components fit together.</p><span class="badge badge-green">Core</span></div>
+      <div class="panel-card"><div class="card-icon">🔍</div><h3>Code Reviewer</h3><p>Reviews pull requests and changes for quality, correctness, and style.</p><span class="badge badge-cyan">Quality</span></div>
+      <div class="panel-card"><div class="card-icon">🛡️</div><h3>Security Reviewer</h3><p>Scans for vulnerabilities, injection risks, and OWASP top-10 issues.</p><span class="badge badge-pink">Security</span></div>
+      <div class="panel-card"><div class="card-icon">🐍</div><h3>Python Reviewer</h3><p>Language-specific reviewer tuned for Pythonic idioms and best practices.</p><span class="badge badge-amber">Language</span></div>
+      <div class="panel-card"><div class="card-icon">🐹</div><h3>Go Reviewer</h3><p>Checks Go code for idiomatic patterns, error handling, and concurrency safety.</p><span class="badge badge-amber">Language</span></div>
+    </div>
+  </div>
+
+  <div id="tab-skills" class="tab-panel">
+    <div class="panel-grid">
+      <div class="panel-card"><div class="card-icon">📘</div><h3>TypeScript Patterns</h3><p>Type-safe patterns, generics best practices, and framework integration.</p><span class="badge badge-cyan">Language</span></div>
+      <div class="panel-card"><div class="card-icon">🐍</div><h3>Python Patterns</h3><p>Pythonic idioms, async patterns, packaging, and testing workflows.</p><span class="badge badge-cyan">Language</span></div>
+      <div class="panel-card"><div class="card-icon">🌐</div><h3>Django Expertise</h3><p>Models, views, serializers, migrations, and deployment best practices.</p><span class="badge badge-green">Framework</span></div>
+      <div class="panel-card"><div class="card-icon">🐘</div><h3>PostgreSQL</h3><p>Query optimization, indexing strategies, migrations, and schema design.</p><span class="badge badge-amber">Database</span></div>
+      <div class="panel-card"><div class="card-icon">🐳</div><h3>Docker</h3><p>Dockerfile authoring, multi-stage builds, compose patterns.</p><span class="badge badge-pink">DevOps</span></div>
+      <div class="panel-card"><div class="card-icon">📝</div><h3>Article Writing</h3><p>Structured content creation, outlines, and editing workflows.</p><span class="badge badge-amber">Business</span></div>
+    </div>
+  </div>
+
+  <div id="tab-commands" class="tab-panel">
+    <div class="panel-grid">
+      <div class="panel-card"><div class="card-icon">📋</div><h3>/plan</h3><p>Generate a structured implementation plan before writing any code.</p><span class="badge badge-green">Planning</span></div>
+      <div class="panel-card"><div class="card-icon">🧪</div><h3>/tdd</h3><p>Test-driven development workflow: write tests first, then implement.</p><span class="badge badge-cyan">Testing</span></div>
+      <div class="panel-card"><div class="card-icon">🔎</div><h3>/code-review</h3><p>Run a multi-pass code review on your changes before committing.</p><span class="badge badge-pink">Quality</span></div>
+      <div class="panel-card"><div class="card-icon">🔧</div><h3>/build-fix</h3><p>Build the project, catch errors, and auto-fix them in a loop.</p><span class="badge badge-amber">Build</span></div>
+      <div class="panel-card"><div class="card-icon">👥</div><h3>/multi-execute</h3><p>Spin up multiple agents to work on tasks in parallel.</p><span class="badge badge-green">Multi-agent</span></div>
+      <div class="panel-card"><div class="card-icon">🚀</div><h3>/pm2</h3><p>Orchestrate long-running services and background processes.</p><span class="badge badge-amber">Ops</span></div>
+    </div>
+  </div>
+
+  <div id="tab-rules" class="tab-panel">
+    <div class="panel-grid">
+      <div class="panel-card"><div class="card-icon">📏</div><h3>Common Principles</h3><p>Shared coding standards that apply across all languages: naming, structure, error handling.</p><span class="badge badge-green">Base</span></div>
+      <div class="panel-card"><div class="card-icon">🟦</div><h3>TypeScript Rules</h3><p>Strict typing, no-any policies, import ordering, and ESLint integration.</p><span class="badge badge-cyan">Language</span></div>
+      <div class="panel-card"><div class="card-icon">🐍</div><h3>Python Rules</h3><p>PEP 8 compliance, type hints, docstring standards, and ruff configuration.</p><span class="badge badge-cyan">Language</span></div>
+      <div class="panel-card"><div class="card-icon">🐹</div><h3>Go Rules</h3><p>Effective Go patterns, error wrapping, linting with golangci-lint.</p><span class="badge badge-cyan">Language</span></div>
+    </div>
+  </div>
+
+  <div id="tab-hooks" class="tab-panel">
+    <div class="panel-grid">
+      <div class="panel-card"><div class="card-icon">📥</div><h3>Session Start</h3><p>Auto-loads memory, project context, and previous session state when Claude starts.</p><span class="badge badge-green">Lifecycle</span></div>
+      <div class="panel-card"><div class="card-icon">📤</div><h3>Session End</h3><p>Persists memory, extracts learned patterns, and saves context on exit.</p><span class="badge badge-green">Lifecycle</span></div>
+      <div class="panel-card"><div class="card-icon">🧠</div><h3>Memory Persistence</h3><p>Saves key decisions and patterns to disk so they survive context resets.</p><span class="badge badge-pink">Memory</span></div>
+      <div class="panel-card"><div class="card-icon">📦</div><h3>Strategic Compaction</h3><p>Intelligently compresses context to maximize useful information per token.</p><span class="badge badge-amber">Optimization</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Flow -->
+<section class="flow-section">
+  <h2>How It Works</h2>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <h4>Install Plugin</h4>
+      <p>Add ECC via the Claude Code marketplace</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <h4>Load Rules</h4>
+      <p>Run install.sh to copy language rules</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <h4>Use Commands</h4>
+      <p>Invoke /plan, /tdd, /code-review&hellip;</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <h4>Auto-Learn</h4>
+      <p>ECC persists patterns across sessions</p>
+    </div>
+  </div>
+</section>
+
+<!-- Interactive Demo -->
+<section class="demo-section">
+  <h2>Try a Command</h2>
+  <p>Click a command below to see what happens</p>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="terminal-dot r"></div>
+      <div class="terminal-dot y"></div>
+      <div class="terminal-dot g"></div>
+      <span>claude</span>
+    </div>
+    <div class="terminal-body" id="terminal-output">
+      <span class="prompt">$ </span><span class="cmd">claude</span><br>
+      <span class="output">Ready. Type a /command to begin&hellip;</span><br>
+      <span class="prompt">$ </span><span class="typing-cursor"></span>
+    </div>
+    <div class="cmd-btns">
+      <button class="cmd-btn" data-cmd="/plan">
+        /plan
+      </button>
+      <button class="cmd-btn" data-cmd="/tdd">
+        /tdd
+      </button>
+      <button class="cmd-btn" data-cmd="/code-review">
+        /code-review
+      </button>
+      <button class="cmd-btn" data-cmd="/build-fix">
+        /build-fix
+      </button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Built to explain <a href="https://github.com/affaan-m/everything-claude-code" target="_blank">everything-claude-code</a></p>
+</footer>
+
+<script>
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// Terminal demo
+const demos = {
+  '/plan': [
+    { type: 'cmd',    text: '/plan "Add user authentication"' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '⚡ ECC Planner Agent activated' },
+    { type: 'output', text: '' },
+    { type: 'output', text: 'Analyzing codebase structure...' },
+    { type: 'output', text: 'Identifying auth touch-points...' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '📋 Implementation Plan:' },
+    { type: 'output', text: '  1. Add JWT middleware to /api routes' },
+    { type: 'output', text: '  2. Create auth service with login/register' },
+    { type: 'output', text: '  3. Add protected route wrapper component' },
+    { type: 'output', text: '  4. Write integration tests for auth flow' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '✅ Plan saved. Run /build to implement.' },
+  ],
+  '/tdd': [
+    { type: 'cmd',    text: '/tdd "Add email validation utility"' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '⚡ ECC TDD Agent activated' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '🧪 Phase 1: Writing tests first...' },
+    { type: 'output', text: '  ✓ test: valid email returns true' },
+    { type: 'output', text: '  ✓ test: missing @ returns false' },
+    { type: 'output', text: '  ✓ test: empty string returns false' },
+    { type: 'output', text: '  ✗ 3 tests failing (no implementation yet)' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '🔨 Phase 2: Implementing...' },
+    { type: 'output', text: '  Writing validateEmail() in utils/email.ts' },
+    { type: 'output', text: '  ✓ 3/3 tests passing' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '✅ TDD cycle complete. All green.' },
+  ],
+  '/code-review': [
+    { type: 'cmd',    text: '/code-review' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '⚡ ECC Review Agents activated' },
+    { type: 'output', text: '' },
+    { type: 'output', text: 'Scanning 4 changed files...' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '🔍 Code Reviewer:' },
+    { type: 'output', text: '  ⚠ Unused import on line 12 of api.ts' },
+    { type: 'output', text: '  ✓ Logic looks correct' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '🛡️ Security Reviewer:' },
+    { type: 'output', text: '  🚨 SQL string interpolation in query.ts:28' },
+    { type: 'output', text: '  → Use parameterized queries instead' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '📊 1 critical, 1 warning, 0 info' },
+  ],
+  '/build-fix': [
+    { type: 'cmd',    text: '/build-fix' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '⚡ ECC Build-Fix loop activated' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '🔨 Build attempt 1...' },
+    { type: 'output', text: '  ✗ TypeError: Property "name" is missing' },
+    { type: 'output', text: '    → src/models/user.ts:15' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '🔧 Auto-fixing...' },
+    { type: 'output', text: '  Added required "name" field to User type' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '🔨 Build attempt 2...' },
+    { type: 'output', text: '  ✓ Build succeeded in 3.2s' },
+    { type: 'output', text: '' },
+    { type: 'hl',     text: '✅ Build passing. Fixed 1 error in 1 cycle.' },
+  ],
+};
+
+let animating = false;
+
+document.querySelectorAll('.cmd-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    if (animating) return;
+    animating = true;
+
+    document.querySelectorAll('.cmd-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const output = document.getElementById('terminal-output');
+    output.innerHTML = '<span class="prompt">$ </span><span class="typing-cursor"></span>';
+
+    const lines = demos[btn.dataset.cmd];
+    await sleep(300);
+
+    for (const line of lines) {
+      const cursor = output.querySelector('.typing-cursor');
+      if (cursor) cursor.remove();
+
+      const span = document.createElement('span');
+      if (line.type === 'cmd')    { span.innerHTML = '<span class="prompt">$ </span><span class="cmd">' + escHtml(line.text) + '</span>'; }
+      else if (line.type === 'hl') { span.innerHTML = '<span class="hl">' + escHtml(line.text) + '</span>'; }
+      else                         { span.innerHTML = '<span class="output">' + escHtml(line.text) + '</span>'; }
+
+      output.appendChild(span);
+      output.appendChild(document.createElement('br'));
+      output.scrollTop = output.scrollHeight;
+      await sleep(line.text === '' ? 80 : 60 + Math.random() * 40);
+    }
+
+    // Re-add prompt
+    const final = document.createElement('span');
+    final.innerHTML = '<span class="prompt">$ </span><span class="typing-cursor"></span>';
+    output.appendChild(final);
+    animating = false;
+  });
+});
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
