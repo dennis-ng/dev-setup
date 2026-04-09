@@ -1,6 +1,12 @@
 # install apps:
 # brew install wezterm neovim lazygit fzf fd bat delta eza tlrc zoxide
 
+# Install TPM (tmux plugin manager) if not already present
+if [ ! -d ~/.tmux/plugins/tpm ]; then
+    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+    echo "Installed TPM. Run 'prefix + I' inside tmux to install plugins."
+fi
+
 # Clone fzf-git.sh if not already present
 if [ ! -d ~/fzf-git.sh ]; then
     git clone https://github.com/dennis-ng/fzf-git.sh.git ~/fzf-git.sh
