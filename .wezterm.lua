@@ -251,6 +251,28 @@ config.keys = {
 		mods = 'CMD',
 		action = wezterm.action.ActivateTab(-1),
 	},
+	-- Unstick terminal after SSH disconnect (alt screen, mouse reporting, bracketed paste, cursor)
+	-- Soft: preserves scrollback. Use CMD+CTRL+R for hard RIS reset.
+	{
+		key = 'u',
+		mods = 'CMD | CTRL',
+		action = wezterm.action.Multiple {
+			wezterm.action.SendString('\x1b[?1049l'),  -- exit alt screen
+			wezterm.action.SendString('\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?1015l'),  -- mouse off
+			wezterm.action.SendString('\x1b[?2004l'),  -- bracketed paste off
+			wezterm.action.SendString('\x1b[?25h'),    -- cursor visible
+			wezterm.action.SendString('\x1b[?7h'),     -- autowrap on
+			wezterm.action.SendString('\x1b[0m'),      -- reset SGR
+			wezterm.action.SendString('\x1b>'),         -- exit application keypad
+			wezterm.action.SendString('\x1b[?1l'),     -- normal cursor keys
+		},
+	},
+	-- Hard reset (RIS) — clears scrollback too. Nuclear option.
+	{
+		key = 'r',
+		mods = 'CMD | CTRL',
+		action = wezterm.action.ResetTerminal,
+	},
 	-- Rename current tab/window
 	{
 		key = 'r',
