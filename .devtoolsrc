@@ -79,4 +79,4 @@ typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND='#000000'
 
 # zoxide
 eval "$(zoxide init zsh)"
-alias cd="z"
+[[ -o interactive ]] && alias cd="z"
