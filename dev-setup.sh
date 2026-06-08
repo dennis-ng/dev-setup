@@ -23,14 +23,14 @@ cp -Rvn "$SCRIPT_DIR"/.config/* ~/.config/
 # Always update lazy.lua to pick up config changes
 cp -v "$SCRIPT_DIR/.config/nvim/lua/config/lazy.lua" ~/.config/nvim/lua/config/lazy.lua
 
-# Append devtoolsrc sourcing to ~/.zshrc if not already present
-ZSHRC_SNIPPET='if [ -f ~/.devtoolsrc ]; then
-    source ~/.devtoolsrc
-fi'
-
-if ! grep -qF 'source ~/.devtoolsrc' ~/.zshrc 2>/dev/null; then
-    printf '\n%s\n' "$ZSHRC_SNIPPET" >> ~/.zshrc
-    echo "Added devtoolsrc sourcing to ~/.zshrc"
-else
-    echo "~/.zshrc already sources ~/.devtoolsrc"
-fi
+# # Append devtoolsrc sourcing to ~/.zshrc if not already present
+# ZSHRC_SNIPPET='if [ -f ~/.devtoolsrc ]; then
+#     source ~/.devtoolsrc
+# fi'
+# 
+# if ! grep -qF 'source ~/.devtoolsrc' ~/.zshrc 2>/dev/null; then
+#     printf '\n%s\n' "$ZSHRC_SNIPPET" >> ~/.zshrc
+#     echo "Added devtoolsrc sourcing to ~/.zshrc"
+# else
+#     echo "~/.zshrc already sources ~/.devtoolsrc"
+# fi
