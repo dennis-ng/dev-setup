@@ -1,0 +1,79 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      # Bind to loopback only. Host + Tailscale (via `tailscale serve`) reach it; LAN cannot.
+      - "127.0.0.1:${WEBUI_PORT:-8920}:8080"
+    environment:
+      # Disable bundled Ollama; use OpenAI-compatible endpoints only
+      ENABLE_OLLAMA_API: "false"
+      ENABLE_OPENAI_API: "true"
+      # Connection URLs, ';'-separated. [0]=OpenRouter [1]=Ollama Cloud.
+      # API KEYS intentionally NOT set here: Open-WebUI persists keys to its DB on
+      # first launch and the DB is authoritative thereafter (env changes ignored).
+      # Manage keys in UI: Admin > Settings > Connections. Clean deploy = enter key once.
+      OPENAI_API_BASE_URLS: "https://openrouter.ai/api/v1;https://ollama.com/v1"
+      # Public base URL when fronted by Tailscale serve/funnel. Fixes redirects + websocket origin.
+      WEBUI_URL: "${WEBUI_URL:-http://localhost:8920}"
+      # Fixed JWT signing secret — persistent across restarts (else forced re-login each boot).
+      WEBUI_SECRET_KEY: "${WEBUI_SECRET_KEY:?set WEBUI_SECRET_KEY in .env}"
+    volumes:
+      - open-webui:/app/backend/data
+
+  # --- Graphiti knowledge-graph MCP server (LLM + embeddings via OpenRouter) ---
+  falkordb:
+    image: falkordb/falkordb:latest
+    container_name: graphiti-falkordb
+    restart: unless-stopped
+    # Redis port NOT published to host (internal compose network only) — security.
+    ports:
+      - "127.0.0.1:${FALKORDB_UI_PORT:-8931}:3000"   # FalkorDB browser UI, loopback only
+    environment:
+      BROWSER: "1"
+      FALKORDB_PASSWORD: "${FALKORDB_PASSWORD:-}"
+    volumes:
+      - falkordb_data:/var/lib/falkordb/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  graphiti-mcp:
+    image: zepai/knowledge-graph-mcp:standalone
+    container_name: graphiti-mcp
+    restart: unless-stopped
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${GRAPHITI_PORT:-8930}:8000"        # MCP HTTP transport, loopback only
+    environment:
+      # OpenRouter creds reused (OpenAI-compatible). No duplicate secret in .env.
+      OPENAI_API_KEY: "${OPENROUTER_API_KEY}"
+      OPENAI_API_URL: "https://openrouter.ai/api/v1"
+      OPENAI_BASE_URL: "https://openrouter.ai/api/v1"   # OpenAI SDK native override; config api_url alone isn't honored
+      MODEL_NAME: "${GRAPHITI_LLM_MODEL:?set GRAPHITI_LLM_MODEL in .env}"
+      # Dual-model: cheap fast model for small ops (dedup/summary/attr). Read by patched factories.py.
+      GRAPHITI_SMALL_MODEL: "${GRAPHITI_SMALL_MODEL:?set GRAPHITI_SMALL_MODEL in .env}"
+      EMBEDDER_MODEL: "qwen/qwen3-embedding-8b"
+      # FalkorDB backend
+      FALKORDB_URI: "redis://falkordb:6379"
+      FALKORDB_PASSWORD: "${FALKORDB_PASSWORD:-}"
+      FALKORDB_DATABASE: "default_db"
+      GRAPHITI_GROUP_ID: "${GRAPHITI_GROUP_ID:-main}"
+      SEMAPHORE_LIMIT: "${SEMAPHORE_LIMIT:-10}"
+      CONFIG_PATH: "/app/mcp/config/config.yaml"
+    volumes:
+      - ./graphiti-config.yaml:/app/mcp/config/config.yaml:ro
+      # Patch: unpin small_model so GRAPHITI_SMALL_MODEL drives dual-model routing.
+      - ./patches/factories.py:/app/mcp/src/services/factories.py:ro
+      # Patch: disable MCP DNS-rebinding host check (else remote Tailscale Host → 421).
+      - ./patches/graphiti_mcp_server.py:/app/mcp/src/graphiti_mcp_server.py:ro
+
+volumes:
+  open-webui:
+  falkordb_data:
